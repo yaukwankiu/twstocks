@@ -6,16 +6,18 @@ import time
 import datetime
 import urllib2
 import re
-
+import os
+import pickle
 ############################
 #   defining the parameters
-
 currentPriceRegex = re.compile(r'(?<=\<td\ align\=\"center\"\ bgcolor\=\"\#FFFfff\"\ nowrap\>\<b\>)\d*\.\d*(?=\<\/b\>\<\/td\>)')
 #companyNameRegex = re.compile( ur'(?<=\<TITLE\>).+(?=-公司資料-奇摩股市\<\/TITLE\>)',re.UNICODE)   #doesn't work somehow
 companyNameRegex = re.compile( ur'\<TITLE.+TITLE\>', re.UNICODE)
-
-############################
-#
+stockSymbolsList = []
+outputFolder = "c:/chen chen/stocks/"
+stockSymbolsFile='stockSymbols.pydump'
+pricesFolder = outputFolder+ "prices/"
+stocksFolder = outputFolder +"stocks/"
 ############################
 #
 ############################
@@ -26,7 +28,7 @@ class stock:
         """e.g.
         https://tw.stock.yahoo.com/d/s/company_1473.html
         """
-        symbol= str(symbol)
+        symbol= ('000'+str(symbol))[-4:]
         self.symbol = symbol
         self.yahooFrontPageUrl     = 'https://tw.stock.yahoo.com/d/s/company_' + symbol + '.html'
         self.yahooCurrentPageUrl   = 'https://tw.stock.yahoo.com/q/q?s=' + symbol
@@ -40,8 +42,8 @@ class stock:
 
     def __call__(self):
         outputString = ""
-        #outputString += self.symbol    #unnecessary
-        outputString +='\n' + self.name + '\n'
+        #outputString += self.symbol  + '\n'  #unnecessary
+        outputString += self.name + '\n'
         outputString += self.yahooCurrentPageUrl + '\n'
         outputString += '\n'.join([time.asctime(time.localtime((v['pingTime'])))+ ":  $" + str(v['price']) for v in self.priceList])
         print outputString
@@ -87,6 +89,51 @@ class stock:
                 time.sleep(throttle)
 
 ############################
+#   defining the functions
+
+
+def getStockSymbolsList1():
+    for N in range(9999):
+        try:
+            s   = stock(N)
+            stockSymbolsList.append(N)
+            print N, s.name, "<-------------added"
+        except:
+            print N, "doesn't exist!"
+    return stocksSymbolsList
+
+def getStockSymbolsList2(url="http://sheet1688.blogspot.tw/2008/11/blog-post_18.html"):
+    raw_text = urllib2.urlopen(url).read()
+    symbols  = re.findall(ur'(?<=num\>)\d\d\d\d(?=\<\/td\>)', raw_text, re.UNICODE)
+    symbols.sort()
+    pickle.dump(symbols, open(outputFolder+stockSymbolsFile,'w'))
+    stockSymbolsList = symbols
+    return symbols
+
+def loadStockSymbolsList(path=outputFolder+stockSymbolsFile):
+    stockSymbolsList = pickle.load(open(path,'r'))
+    return stockSymbolsList
+
+def makeStocksList(inPath=outputFolder+stockSymbolsFile,
+                   outputFolder=stocksFolder):
+    symbols = loadStockSymbolsList()
+    for N in symbols:
+        try:
+            st = stock(N)
+            pickle.dump(st, open(outputFolder+st.name+'.pydump','w'))
+            print st.name, "-->", outputFolder+st.name+'.pydump'
+
+        except:
+            print "stock symbol", N, "not found!!!!"
+
+def loadStocksList(inputFolder=stocksFolder):
+    stocksList = []
+    L = os.listdir(inputFolder)
+    L.sort(key=lambda v: v[-13:-7])
+    for fileName in L:
+        stocksList.append(pickle.load(open(inputFolder+fileName,'r')))
+    return stocksList
+############################
 #   constructing examples
 
 tainam  = stock(symbol='1473')    
@@ -104,7 +151,7 @@ def main0():
         st()
         st.getPriceList(repetitions=5, throttle=0.3)
 
-def main():
+def main1():
     for st in stocksList:
         st()
     print "=================="
@@ -112,6 +159,41 @@ def main():
         for st in stocksList:
             st.getCurrentPrice()
             time.sleep(.5)
+
+def main2():
+    print "=================="
+    print time.asctime(time.localtime(time.time()))
+    #symbols = loadStockSymbolsList()
+    LT = time.localtime
+    while True:
+        stocks = loadStocksList()   #clean up every day
+        while LT().tm_hour<9:
+            pass
+        while LT().tm_hour >=9 and (LT().tm_hour<=13 and LT().tm_min<=30):
+            for st in stocks:
+                try:
+                    currentPrice, t0, dt = st.getCurrentPrice()
+                    if not os.path.exists(pricesFolder+st.name+'.dat'):
+                        outputString = "time,            price,    response time\n"
+                    else:
+                        outputString = ""
+                    outputString += str(t0) + ",  " + str(currentPrice)
+                    if dt>1:
+                        outputString += ",  " + str(int(dt))
+                    outputString +=  '\n'
+                    open(pricesFolder+st.name+'.dat','a').write(outputString)
+                    time.sleep(.5)
+                except:
+                    print "ERROR!!  <------ ", st.name
+            T = time.localtime()
+            print time.asctime(T)
+            #if T.tm_hour < 9 or T.tm_hour>=13 and T.tm_min>=30:
+            #    time.sleep(86400 - (13-9)*3600 - 30*60)
+        print "End of the trading session of the day!"
+    
+def main():
+    main2()
+
 if __name__=="__main__":
     main()
 
