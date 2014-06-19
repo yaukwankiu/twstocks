@@ -164,12 +164,15 @@ def main2():
     print "=================="
     print time.asctime(time.localtime(time.time()))
     #symbols = loadStockSymbolsList()
-    LT = time.localtime
     while True:
         stocks = loadStocksList()   #clean up every day
-        while LT().tm_hour<9:
+        while time.localtime(time.time()).tm_wday > 4:  #weekends
             pass
-        while LT().tm_hour >=9 and (LT().tm_hour<=13 and LT().tm_min<=30):
+        while time.localtime(time.time()).tm_hour<9:
+            pass
+        while (time.localtime(time.time()).tm_hour >=9 and \
+              time.localtime(time.time()).tm_hour < 13) or \
+              (time.localtime(time.time()).tm_hour==13 and time.localtime(time.time()).tm_min<=30):
             for st in stocks:
                 try:
                     currentPrice, t0, dt = st.getCurrentPrice()
