@@ -8,6 +8,8 @@ import urllib2
 import re
 import os
 import pickle
+import numpy as np
+import matplotlib.pyplot as plt
 ############################
 #   defining the parameters
 currentPriceRegex = re.compile(r'(?<=\<td\ align\=\"center\"\ bgcolor\=\"\#FFFfff\"\ nowrap\>\<b\>)\d*\.\d*(?=\<\/b\>\<\/td\>)')
@@ -38,14 +40,15 @@ class stock:
         raw_text       =  yahooFrontPage.read()
         self.name      =  companyNameRegex.findall(raw_text)[0]
         self.name      =  self.name[7:-26]
-        self.priceList          = []
+        self.pricesList          = []
+     
 
     def __call__(self):
         outputString = ""
         #outputString += self.symbol  + '\n'  #unnecessary
         outputString += self.name + '\n'
         outputString += self.yahooCurrentPageUrl + '\n'
-        outputString += '\n'.join([time.asctime(time.localtime((v['pingTime'])))+ ":  $" + str(v['price']) for v in self.priceList])
+        outputString += '\n'.join([time.asctime(time.localtime((v['pingTime'])))+ ":  $" + str(v['price']) for v in self.pricesList])
         print outputString
         
 
@@ -68,7 +71,7 @@ class stock:
                 print "(response time: ", t1-t0, ")",
             #print self.symbol, #unnecessary
             print self.name, "Price:", currentPrice
-        self.priceList.append({'price'          : currentPrice,
+        self.pricesList.append({'price'          : currentPrice,
                                'pingTime'       : t0,
                                'responseTime'   : t1-t0,
                                })
@@ -81,13 +84,43 @@ class stock:
         while count!= repetitions:
             count +=1
             p, t0, dt = self.getCurrentPrice(verbose=verbose)
-            self.priceList.append({'price'          : p,
+            self.pricesList.append({'price'          : p,
                                    'pingTime'       : t0,
                                    'responseTime'   : dt,
                                    })
             if throttle>0:
                 time.sleep(throttle)
 
+    def loadPrices(self, pricesPath="", eraseOld=True):
+        if eraseOld:
+            self.pricesList = []
+        if pricesPath == "":
+            pricesPath = pricesFolder + self.name + ".dat"
+        raw_text = open(pricesPath, 'r').read()
+        x        = raw_text.split('\n')[1:]
+        xx       = [v.split(',') for v in x]
+        for u in xx:
+            print u
+            if len(u) ==2:
+                self.pricesList.append({'price'    : u[0],
+                                       'pingTime' : u[1] ,
+                                        'responseTime': 0
+                                        })
+            elif len(u) ==3:
+                self.pricesList.append({'price'    : u[0],
+                                       'pingTime' : u[1] ,
+                                        'responseTime': u[2]
+                                        })                     
+    def load(self, *args, **kwargs):
+        self.loadPrices(*args, **kwargs)
+
+    def plot(self, display=True):
+        y = [v['price'] for v in self.pricesList]
+        x = [v['pingTime'] for v in self.pricesList]
+        plt.plot(y,x)
+        plt.title(self.symbol)
+        if display:
+            plt.show()
 ############################
 #   defining the functions
 
@@ -133,16 +166,8 @@ def loadStocksList(inputFolder=stocksFolder):
     for fileName in L:
         stocksList.append(pickle.load(open(inputFolder+fileName,'r')))
     return stocksList
-############################
-#   constructing examples
 
-tainam  = stock(symbol='1473')    
-chenpinsen = stock(symbol=2926)
-ganung     = stock(symbol=2374)
-tungyang   = stock(symbol=1319)
-htc        = stock(2498)
-prince     = stock(2511)
-stocksList = [tainam, chenpinsen, ganung, tungyang, htc, prince]
+
 
 ############################
 #   test run
@@ -198,6 +223,17 @@ def main():
     main2()
 
 if __name__=="__main__":
+    ############################
+    #   constructing examples
+    tainam  = stock(symbol='1473')    
+    chenpinsen = stock(symbol=2926)
+    ganung     = stock(symbol=2374)
+    tungyang   = stock(symbol=1319)
+    htc        = stock(2498)
+    prince     = stock(2511)
+    stocksList = [tainam, chenpinsen, ganung, tungyang, htc, prince]
+    ##############################
+    #   test run
     main()
 
 
