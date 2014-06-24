@@ -1,0 +1,8 @@
+
+*.pyc
+*.*~
+*.dat
+*.txt
+*.pydump
+*.html
+
