@@ -98,8 +98,8 @@ class stock:
         outputString += str(t0) + ",  " + str(currentPrice)
         if dt>1:
            outputString += ",  " + str(int(dt))
-           outputString +=  '\n'
-           open(pricesFolder+st.name+'.dat','a').write(outputString)
+        outputString +=  '\n'
+        open(pricesFolder+self.name+'.dat','a').write(outputString)
         if verbose:
             print self.name, outputString
 
@@ -148,6 +148,19 @@ class stock:
 ############################
 #   defining the functions
 
+def loadStock(symbol, folder=stocksFolder, verbose=True):
+    symbol = str(symbol)
+    L = os.listdir(folder)
+    L = [v for v in L if symbol in v]
+    if verbose:
+        print "Folder:", folder+L[0]
+    if len(L) == 0:
+        print symbol, "not found!!"
+    else:
+        st = pickle.load(open(folder + L[0], 'r'))
+        print st.name, "loaded"
+        return st
+    
 def getStockSymbolsList1():
     for N in range(9999):
         try:
@@ -209,7 +222,8 @@ def isTradingHour():
     """determine if it is trading Hour"""
     return (time.localtime(time.time()).tm_hour >=9 and \
               time.localtime(time.time()).tm_hour < 13) or \
-              (time.localtime(time.time()).tm_hour==13 and time.localtime(time.time()).tm_min<=30)
+              (time.localtime(time.time()).tm_hour==13 and time.localtime(time.time()).tm_min<=30) and\
+            ( time.localtime(time.time()).tm_wday > 4)
 
 def clearStockPrices(stocksList=stocksList):
     for st in stocksList:
@@ -249,22 +263,25 @@ def main1():
             st.getCurrentPrice()
             time.sleep(.5)
 
-def main2():
+def main2(busy=False):
     print "=================="
     print time.asctime(time.localtime(time.time()))
     #symbols = loadStockSymbolsList()
-    if not isTradingHour():
+    if not isTradingHour() and busy:
         print "not trading hour!"
         writeCurrentStockPrices()   #if after hour, do it once
 
     while True:
         time0= time.time()
         #print "loading stocks"
+        print time.asctime(time.localtime(time.time()))
+        
         stocks = loadStocksList()   #clean up every day
-        #while time.localtime(time.time()).tm_wday > 4:  #weekends
-        #    pass
-        #while time.localtime(time.time()).tm_hour<9:
-        #    pass
+        while not isTradingHour():
+            print time.asctime(time.localtime(time.time()))
+            seconds = time.localtime().tm_sec
+            time.sleep(60-seconds-0.5)
+            
         while (time.localtime(time.time()).tm_hour >=9 and \
               time.localtime(time.time()).tm_hour < 13) or \
               (time.localtime(time.time()).tm_hour==13 and time.localtime(time.time()).tm_min<=30):
@@ -292,7 +309,7 @@ def main2():
 def main():
     main2()
 
-if __name__=="__main__":
+def examples():
     ############################
     #   constructing examples
     tainam  = stock(symbol='1473')    
@@ -303,6 +320,16 @@ if __name__=="__main__":
     prince     = stock(2511)
     stocksList = [tainam, chenpinsen, ganung, tungyang, htc, prince]
     ##############################
+    return stocksList
+
+if __name__=="__main__":
+    tainam  = stock(symbol='1473')    
+    chenpinsen = stock(symbol=2926)
+    ganung     = stock(symbol=2374)
+    tungyang   = stock(symbol=1319)
+    htc        = stock(2498)
+    prince     = stock(2511)
+    stocksList = [tainam, chenpinsen, ganung, tungyang, htc, prince]
     #   test run
     main()
 
