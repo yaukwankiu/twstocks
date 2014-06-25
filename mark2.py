@@ -126,14 +126,14 @@ class stock:
         for u in xx:
             print u
             if len(u) ==2:
-                self.pricesList.append({'price'    : u[0],
-                                       'pingTime' : u[1] ,
+                self.pricesList.append({'price'    : float(u[0]),
+                                       'pingTime' : float(u[1]) ,
                                         'responseTime': 0
                                         })
             elif len(u) ==3:
-                self.pricesList.append({'price'    : u[0],
-                                       'pingTime' : u[1] ,
-                                        'responseTime': u[2]
+                self.pricesList.append({'price'    : float(u[0]),
+                                       'pingTime' : float(u[1]) ,
+                                        'responseTime': float(u[2])
                                         })                     
     def load(self, *args, **kwargs):
         self.loadPrices(*args, **kwargs)

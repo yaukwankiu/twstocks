@@ -102,14 +102,14 @@ class stock:
         for u in xx:
             print u
             if len(u) ==2:
-                self.pricesList.append({'price'    : u[0],
-                                       'pingTime' : u[1] ,
+                self.pricesList.append({'price'    : float(u[0]),
+                                       'pingTime' : float(u[1] ),
                                         'responseTime': 0
                                         })
             elif len(u) ==3:
-                self.pricesList.append({'price'    : u[0],
-                                       'pingTime' : u[1] ,
-                                        'responseTime': u[2]
+                self.pricesList.append({'price'    : float(u[0]),
+                                       'pingTime' : float(u[1]) ,
+                                        'responseTime': float(u[2])
                                         })                     
     def load(self, *args, **kwargs):
         self.loadPrices(*args, **kwargs)
@@ -176,14 +176,20 @@ def main0():
         st()
         st.getPriceList(repetitions=5, throttle=0.3)
 
-def main1():
+def main1(throttle=0.5):
     for st in stocksList:
+        st.load()
         st()
     print "=================="
     while True:
+        time0 = time.time()
+        if time.time() - time0 > 1200:
+            for st in stocksList:
+                st()
+            time0 = time.time()
         for st in stocksList:
             st.getCurrentPrice()
-            time.sleep(.5)
+        time.sleep(throttle)
 
 def main2():
     print "=================="
@@ -219,8 +225,8 @@ def main2():
             #    time.sleep(86400 - (13-9)*3600 - 30*60)
         print "End of the trading session of the day!"
     
-def main():
-    main1()
+def main(*args, **kwargs):
+    main1(*args, **kwargs)
 
 if __name__=="__main__":
     ############################
@@ -234,7 +240,7 @@ if __name__=="__main__":
     stocksList = [tainam, chenpinsen, ganung, tungyang, htc, prince]
     ##############################
     #   test run
-    main()
+    main(60)
 
 
 
