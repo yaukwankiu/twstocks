@@ -1,11 +1,5 @@
 # -*- coding: utf8 -*-
-"""
-USE:
 
-from mark2 import *
-main()
-
-"""
 ############################
 #   imports
 import time
@@ -22,12 +16,10 @@ currentPriceRegex = re.compile(r'(?<=\<td\ align\=\"center\"\ bgcolor\=\"\#FFFff
 #companyNameRegex = re.compile( ur'(?<=\<TITLE\>).+(?=-公司資料-奇摩股市\<\/TITLE\>)',re.UNICODE)   #doesn't work somehow
 companyNameRegex = re.compile( ur'\<TITLE.+TITLE\>', re.UNICODE)
 stockSymbolsList = []
-outputFolder = ""
+outputFolder = "c:/chen chen/stocks/"
 stockSymbolsFile='stockSymbols.pydump'
 pricesFolder = outputFolder+ "prices/"
 stocksFolder = outputFolder +"stocks/"
-foldersList = [stocksFolder, pricesFolder]
-stocksList=[]
 ############################
 #
 ############################
@@ -49,6 +41,7 @@ class stock:
         self.name      =  companyNameRegex.findall(raw_text)[0]
         self.name      =  self.name[7:-26]
         self.pricesList          = []
+     
 
     def __call__(self):
         outputString = ""
@@ -68,7 +61,7 @@ class stock:
         raw_text = self.yahooCurrentPage.read()
         t1 = time.time()
         self.yahooCurrentPage.close()
-        currentPrice = float(currentPriceRegex.findall(raw_text)[0])
+        currentPrice = currentPriceRegex.findall(raw_text)[0]
         self.currentPricePingTime = t0
         self.currentPricePingReturnTime = t1
         self.currentPrice = currentPrice
@@ -82,26 +75,9 @@ class stock:
                                'pingTime'       : t0,
                                'responseTime'   : t1-t0,
                                })
+
+
         return currentPrice, t0, t1-t0
-
-    def writeCurrentPrice(self, verbose=True):
-        P = self.pricesList[-1]  # the last one
-        currentPrice = P['price']
-        t0           = P['pingTime']
-        dt           = P['responseTime']
-        outputString= ''
-
-        if not os.path.exists(pricesFolder+self.name+'.dat'):
-           outputString = "#time,            price,    response time\n"
-        else:
-           outputString = ""
-        outputString += str(t0) + ",  " + str(currentPrice)
-        if dt>1:
-           outputString += ",  " + str(int(dt))
-        outputString +=  '\n'
-        open(pricesFolder+self.name+'.dat','a').write(outputString)
-        if verbose:
-            print self.name, outputString
 
     def getPriceList(self, throttle=1, repetitions=-999, verbose=True):
         count = 0
@@ -148,19 +124,7 @@ class stock:
 ############################
 #   defining the functions
 
-def loadStock(symbol, folder=stocksFolder, verbose=True):
-    symbol = str(symbol)
-    L = os.listdir(folder)
-    L = [v for v in L if symbol in v]
-    if verbose:
-        print "Folder:", folder+L[0]
-    if len(L) == 0:
-        print symbol, "not found!!"
-    else:
-        st = pickle.load(open(folder + L[0], 'r'))
-        print st.name, "loaded"
-        return st
-    
+
 def getStockSymbolsList1():
     for N in range(9999):
         try:
@@ -189,7 +153,7 @@ def makeStocksList(inPath=outputFolder+stockSymbolsFile,
     for N in symbols:
         try:
             st = stock(N)
-            pickle.dump(st, open(outputFolder+st.name+ '.pydump','w'))
+            pickle.dump(st, open(outputFolder+st.name+'.pydump','w'))
             print st.name, "-->", outputFolder+st.name+'.pydump'
 
         except:
@@ -202,48 +166,6 @@ def loadStocksList(inputFolder=stocksFolder):
     for fileName in L:
         stocksList.append(pickle.load(open(inputFolder+fileName,'r')))
     return stocksList
-
-def writeCurrentStockPrices(verbose=True):
-    stocksList = loadStocksList()
-    for st in stocksList:
-        try:
-            st.getCurrentPrice()
-            #if verbose:
-            #    print st.name, st.pricesList[-1]
-        except:
-            print st.name, "<-- can't get current price!"
-        try:
-            st.writeCurrentPrice(verbose=verbose)
-        except:
-            print "    ", st.name, "<-- no price to write!"
-        time.sleep(0.5)
-
-def isTradingHour():
-    """determine if it is trading Hour"""
-    return (time.localtime(time.time()).tm_hour >=9 and \
-              time.localtime(time.time()).tm_hour < 13) or \
-              (time.localtime(time.time()).tm_hour==13 and time.localtime(time.time()).tm_min<=30) and\
-            ( time.localtime(time.time()).tm_wday > 4)
-
-def clearStockPrices(stocksList=stocksList):
-    for st in stocksList:
-        st.pricesList = []
-
-def initialise(toGetSymbols=False, toMakeStockObjects=True ):
-    """to initialise the project, setting up the folders etc"""
-    # creating the folders
-    for path in foldersList:
-        if not os.path.exists(path):
-            os.makedirs(path)
-    # getting the stock index lists
-    # constructing the stocks objects
-    if toGetSymbols:
-        symbols = getStockSymbolsList2()
-    else:
-        symbols = loadStockSymbolsList()
-    if toMakeStockObjects:
-        makeStocksList()
-###
 
 
 
@@ -263,25 +185,16 @@ def main1():
             st.getCurrentPrice()
             time.sleep(.5)
 
-def main2(busy=False):
+def main2():
     print "=================="
     print time.asctime(time.localtime(time.time()))
     #symbols = loadStockSymbolsList()
-    if not isTradingHour() and busy:
-        print "not trading hour!"
-        writeCurrentStockPrices()   #if after hour, do it once
-
     while True:
-        time0= time.time()
-        #print "loading stocks"
-        print time.asctime(time.localtime(time.time()))
-        
         stocks = loadStocksList()   #clean up every day
-        while not isTradingHour():
-            print time.asctime(time.localtime(time.time()))
-            seconds = time.localtime().tm_sec
-            time.sleep(60-seconds-0.5)
-            
+        while time.localtime(time.time()).tm_wday > 4:  #weekends
+            pass
+        while time.localtime(time.time()).tm_hour<9:
+            pass
         while (time.localtime(time.time()).tm_hour >=9 and \
               time.localtime(time.time()).tm_hour < 13) or \
               (time.localtime(time.time()).tm_hour==13 and time.localtime(time.time()).tm_min<=30):
@@ -289,7 +202,7 @@ def main2(busy=False):
                 try:
                     currentPrice, t0, dt = st.getCurrentPrice()
                     if not os.path.exists(pricesFolder+st.name+'.dat'):
-                        outputString = "#time,            price,    response time\n"
+                        outputString = "time,            price,    response time\n"
                     else:
                         outputString = ""
                     outputString += str(t0) + ",  " + str(currentPrice)
@@ -304,12 +217,12 @@ def main2(busy=False):
             print time.asctime(T)
             #if T.tm_hour < 9 or T.tm_hour>=13 and T.tm_min>=30:
             #    time.sleep(86400 - (13-9)*3600 - 30*60)
-        #print "End of the trading session of the day!"
+        print "End of the trading session of the day!"
     
 def main():
-    main2()
+    main1()
 
-def examples():
+if __name__=="__main__":
     ############################
     #   constructing examples
     tainam  = stock(symbol='1473')    
@@ -320,16 +233,6 @@ def examples():
     prince     = stock(2511)
     stocksList = [tainam, chenpinsen, ganung, tungyang, htc, prince]
     ##############################
-    return stocksList
-
-if __name__=="__main__":
-    tainam  = stock(symbol='1473')    
-    chenpinsen = stock(symbol=2926)
-    ganung     = stock(symbol=2374)
-    tungyang   = stock(symbol=1319)
-    htc        = stock(2498)
-    prince     = stock(2511)
-    stocksList = [tainam, chenpinsen, ganung, tungyang, htc, prince]
     #   test run
     main()
 
