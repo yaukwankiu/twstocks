@@ -22,7 +22,12 @@ currentPriceRegex = re.compile(r'(?<=\<td\ align\=\"center\"\ bgcolor\=\"\#FFFff
 #companyNameRegex = re.compile( ur'(?<=\<TITLE\>).+(?=-公司資料-奇摩股市\<\/TITLE\>)',re.UNICODE)   #doesn't work somehow
 companyNameRegex = re.compile( ur'\<TITLE.+TITLE\>', re.UNICODE)
 stockSymbolsList = []
-outputFolder = "c:/chen chen/stocks/"
+
+try:
+    import localSettings as locSet
+    outputFolder = locSet.root
+except ImportError:
+    outputFolder = "c:/chen chen/stocks/"
 stockSymbolsFile='stockSymbols.pydump'
 pricesFolder = outputFolder+ "prices/"
 stocksFolder = outputFolder +"stocks/"

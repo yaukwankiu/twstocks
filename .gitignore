@@ -4,4 +4,4 @@
 *.txt
 *.pydump
 *.html
-
+localSettings.py
