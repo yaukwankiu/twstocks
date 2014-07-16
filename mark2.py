@@ -400,7 +400,9 @@ def getWatchList():
         tungyang   = stock(symbol=1319)
         htc        = stock(2498)
         prince     = stock(2511)
-        stocksList = [tainam, chenpinsen, ganung, tungyang, htc, prince]
+        stocksList = [tainam,
+                      #chenpinsen,
+                      ganung, tungyang, htc, prince]
     except:
         print "Error constructing the %dth example!" % (len(stocksList)+1)
         for i in range(len(symbols)):
