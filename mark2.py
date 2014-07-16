@@ -155,7 +155,7 @@ class stock:
         y = [v['price'] for v in self.pricesList]
         x = [v['pingTime'] for v in self.pricesList]
         plt.plot(x,y)
-        plt.title(self.symbol)
+        plt.title(self.symbol+":" + time.asctime(time.localtime()))
         if display:
             plt.show(block=block)
         return self
@@ -318,6 +318,8 @@ def main2(toWatch="fixed",
         writeCurrentStockPrices()   #if after hour, do it once
  
     stocks = loadStocksList()
+    randomPosition = int(np.random.random()*len(stocks))
+    stocks = stocks[randomPosition:] + stocks[:randomPosition]
     while True:
         time0= time.time()
         #print "loading stocks"
@@ -337,7 +339,16 @@ def main2(toWatch="fixed",
                     for st in stocksList:   
                         st()                # watch selected stocks
                     time0 = time.time()
-
+                if (time.time() - time0) % 10 < 0.7:
+                    plt.close()
+                    stockRandom = stocks[int(np.random.random()*len(stocks))]
+                    try:
+                        stockRandom.load()
+                        stockRandom.getCurrentPrice()
+                        #stockRandom.writeCurrentPrice()
+                        stockRandom.plot()
+                    except:
+                        print "Can't get data for: ",stockRandom.name
                 try:
                     currentPrice, t0, dt = st.getCurrentPrice()
                     if not os.path.exists(pricesFolder+st.name+'.dat'):
@@ -364,13 +375,30 @@ def main(*args, **kwargs):
 def getWatchList():
     ############################
     #   constructing examples
-    tainam  = stock(symbol='1473')    
-    chenpinsen = stock(symbol=2926)
-    ganung     = stock(symbol=2374)
-    tungyang   = stock(symbol=1319)
-    htc        = stock(2498)
-    prince     = stock(2511)
-    stocksList = [tainam, chenpinsen, ganung, tungyang, htc, prince]
+    symbols = [1473, 2926, 2374, 1319, 2498, 2511]
+    tainam = ""
+    chenpinsen = ""
+    ganung = ""
+    tungyang = ""
+    htc = ""
+    prince = ""
+    stocksList = []
+    try:
+        tainam  = stock(symbol='1473')    
+        chenpinsen = stock(symbol=2926)
+        ganung     = stock(symbol=2374)
+        tungyang   = stock(symbol=1319)
+        htc        = stock(2498)
+        prince     = stock(2511)
+        stocksList = [tainam, chenpinsen, ganung, tungyang, htc, prince]
+    except:
+        print "Error constructing the %dth example!" % (len(stocksList)+1)
+        for i in range(len(symbols)):
+            try:
+                stocksList.append(stock(symbol=i))
+            except:
+                print "Error constructing stock with symbol " + str(i)
+            
     ##############################
     return stocksList
 
