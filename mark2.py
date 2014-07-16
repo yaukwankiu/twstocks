@@ -50,10 +50,14 @@ class stock:
         self.yahooCurrentPageUrl   = 'https://tw.stock.yahoo.com/q/q?s=' + symbol
 
         #   get some basic information from the front page
-        yahooFrontPage = urllib2.urlopen(self.yahooFrontPageUrl)
-        raw_text       =  yahooFrontPage.read()
-        self.name      =  companyNameRegex.findall(raw_text)[0]
-        self.name      =  self.name[7:-26]
+        self.name      = str(symbol)    #default
+        try:
+            yahooFrontPage = urllib2.urlopen(self.yahooFrontPageUrl)
+            raw_text       =  yahooFrontPage.read()
+            self.name      =  companyNameRegex.findall(raw_text)[0]
+            self.name      =  self.name[7:-26]
+        except:
+            print "Can't open yahooFrontPage for symbol ", symbol
         self.pricesList          = []
         #return self
 
@@ -234,8 +238,8 @@ def writeCurrentStockPrices(verbose=True):
 
 def isTradingHour():
     """determine if it is trading Hour"""
-    return ((time.localtime(time.time()).tm_hour >8 and time.localtime(time.time()).tm_hour <15) or\
-              (time.localtime(time.time()).tm_hour==15 and time.localtime(time.time()).tm_min<=30) or\
+    return ((time.localtime(time.time()).tm_hour >8 and time.localtime(time.time()).tm_hour <14) or\
+              (time.localtime(time.time()).tm_hour==14 and time.localtime(time.time()).tm_min<=30) or\
               (time.localtime(time.time()).tm_hour==8 and time.localtime(time.time()).tm_min>=30))\
               and\
             ( time.localtime(time.time()).tm_wday <=4) 
@@ -301,8 +305,9 @@ def main1():
             st.getCurrentPrice()
             time.sleep(.5)
 
-def main2(toWatch="fixed",
+def main2(#toWatch="fixed",
           #toWatch="random",
+          toWatch="both",
           verbose=False):
     print "=================="
     print time.asctime(time.localtime(time.time()))
@@ -329,8 +334,11 @@ def main2(toWatch="fixed",
         while not isTradingHour():
             if toWatch =='random':
                 watchRandom(stocks=stocks)
+            elif toWatch =='fixed':
+                watch()
             else:
                 watch()
+                watchRandom(stocks=stocks)
 
         while isTradingHour():
              
@@ -375,7 +383,9 @@ def main(*args, **kwargs):
 def getWatchList():
     ############################
     #   constructing examples
-    symbols = [1473, 2926, 2374, 1319, 2498, 2511]
+    symbols = [1473,
+               #2926,  #no data
+               2374, 1319, 2498, 2511]
     tainam = ""
     chenpinsen = ""
     ganung = ""
@@ -385,7 +395,7 @@ def getWatchList():
     stocksList = []
     try:
         tainam  = stock(symbol='1473')    
-        chenpinsen = stock(symbol=2926)
+        #chenpinsen = stock(symbol=2926)    #no data
         ganung     = stock(symbol=2374)
         tungyang   = stock(symbol=1319)
         htc        = stock(2498)
