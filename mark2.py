@@ -338,7 +338,10 @@ def main2(#toWatch="fixed",
                 watch()
             else:
                 watchRandom(stocks=stocks)
+                watchRandom(stocks=stocks)
+                watchRandom(stocks=stocks)
                 watch()
+                watchRandom(stocks=stocks)
 
         while isTradingHour():
              
