@@ -337,8 +337,8 @@ def main2(#toWatch="fixed",
             elif toWatch =='fixed':
                 watch()
             else:
-                watch()
                 watchRandom(stocks=stocks)
+                watch()
 
         while isTradingHour():
              
@@ -425,7 +425,7 @@ def watch(L="", load=True, display=True):
             st.plot()
             time.sleep(20)
 
-def watchRanom(stocks=""):
+def watchRandom(stocks=""):
     if stocks=="":
         stocks = loadStocksList()
     print '...............'
