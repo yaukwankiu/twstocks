@@ -308,6 +308,7 @@ def main1():
 def main2(#toWatch="fixed",
           #toWatch="random",
           toWatch="both",
+          timeSleep=5,
           verbose=False):
     print "=================="
     print time.asctime(time.localtime(time.time()))
@@ -327,6 +328,7 @@ def main2(#toWatch="fixed",
     stocks = stocks[randomPosition:] + stocks[:randomPosition]
     while True:
         time0= time.time()
+        time1= time0
         #print "loading stocks"
         print time.asctime(time.localtime(time.time()))
         
@@ -337,11 +339,11 @@ def main2(#toWatch="fixed",
             elif toWatch =='fixed':
                 watch()
             else:
-                watchRandom(stocks=stocks)
-                watchRandom(stocks=stocks)
-                watchRandom(stocks=stocks)
+                watchRandom(stocks=stocks, timeSleep=timeSleep)
+                watchRandom(stocks=stocks, timeSleep=timeSleep)
+                watchRandom(stocks=stocks, timeSleep=timeSleep)
                 watch()
-                watchRandom(stocks=stocks)
+                watchRandom(stocks=stocks, timeSleep=timeSleep)
 
         while isTradingHour():
              
@@ -350,7 +352,7 @@ def main2(#toWatch="fixed",
                     for st in stocksList:   
                         st()                # watch selected stocks
                     time0 = time.time()
-                if (time.time() - time0) % 10 < 0.7:
+                if (time.time() - time0) % timeSleep < 0.7:
                     plt.close()
                     stockRandom = stocks[int(np.random.random()*len(stocks))]
                     try:
@@ -428,7 +430,7 @@ def watch(L="", load=True, display=True):
             st.plot()
             time.sleep(20)
 
-def watchRandom(stocks=""):
+def watchRandom(stocks="", timeSleep=10):
     if stocks=="":
         stocks = loadStocksList()
     print '...............'
@@ -440,9 +442,11 @@ def watchRandom(stocks=""):
     st.plot()
     seconds = time.localtime().tm_sec
     #time.sleep(60-seconds-0.05)
-    time.sleep(30)
+    time.sleep(timeSleep)
 
 if __name__=="__main__":
+    print "sleeping 5 seconds"
+    time.sleep(5)
     tainam  = stock(symbol='1473')    
     chenpinsen = stock(symbol=2926)
     ganung     = stock(symbol=2374)
