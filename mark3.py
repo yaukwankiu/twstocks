@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 currentPriceRegex = re.compile(r'(?<=\<td\ align\=\"center\"\ bgcolor\=\"\#FFFfff\"\ nowrap\>\<b\>)\d*\.\d*(?=\<\/b\>\<\/td\>)')
 #companyNameRegex = re.compile( ur'(?<=\<TITLE\>).+(?=-公司資料-奇摩股市\<\/TITLE\>)',re.UNICODE)   #doesn't work somehow
 companyNameRegex = re.compile( ur'\<TITLE.+TITLE\>', re.UNICODE)
+companyPageUrlRegex = re.compile(ur"(?<=\' target\=\'_NONE\'\>)http\:\/\/.+?\/"   )#hack
 stockSymbolsList = []
 outputFolder = "c:/chen chen/stocks/"
 stockSymbolsFile='stockSymbols.pydump'
@@ -59,6 +60,13 @@ class stock:
         except:
             print "Can't open yahooFrontPage for symbol ", symbol
         self.pricesList          = []
+        try:
+            self.companyPageUrl = companyPageUrlRegex.findall(raw_text)[0]
+        except:
+            self.companyPageUrl = ""
+
+
+        #return self
 
     def __call__(self, numberOfPricesToShow=numberOfPricesToShow):
         outputString = ""
@@ -158,7 +166,8 @@ class stock:
         y = [v['price'] for v in self.pricesList]
         x = [v['pingTime'] for v in self.pricesList]
         plt.plot(x,y)
-        plt.title(self.symbol+":" + time.asctime(time.localtime()))
+        plt.title(self.symbol+":" + time.asctime(time.localtime()) +'\n' +\
+                   self.companyPageUrl)
         if display:            
             plt.show(block=block)
         return self
