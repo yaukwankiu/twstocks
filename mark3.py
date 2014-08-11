@@ -27,11 +27,15 @@ currentPriceRegex = re.compile(r'(?<=\<td\ align\=\"center\"\ bgcolor\=\"\#FFFff
 #companyNameRegex = re.compile( ur'(?<=\<TITLE\>).+(?=-公司資料-奇摩股市\<\/TITLE\>)',re.UNICODE)   #doesn't work somehow
 companyNameRegex = re.compile( ur'\<TITLE.+TITLE\>', re.UNICODE)
 companyPageUrlRegex = re.compile(ur"(?<=\' target\=\'_NONE\'\>)http\:\/\/.+?\/"   )#hack
+companyPageUrlRegex2 = re.compile(ur"(?<=\' target\=\'_NONE\'\>)http\:\/\/.+?\.com\.tw"   )#hack2
+companyPageUrlRegex3 = re.compile(ur"(?<=\' target\=\'_NONE\'\>)http\:\/\/.+?\.com"   )#hack3
+
+
 stockSymbolsList = []
 outputFolder = "c:/chen chen/stocks/"
 stockSymbolsFile='stockSymbols.pydump'
 pricesFolder = outputFolder+ "prices/"
-stocksFolder = outputFolder +"stocks/"
+stocksFolder = outputFolder +"stocks_7/"
 foldersList = [stocksFolder, pricesFolder]
 numberOfPricesToShow = 10
 stocksList=[]
@@ -63,8 +67,13 @@ class stock:
         try:
             self.companyPageUrl = companyPageUrlRegex.findall(raw_text)[0]
         except:
-            self.companyPageUrl = ""
-
+            try:
+                self.companyPageUrl = companyPageUrlRegex2.findall(raw_text)[0]
+            except:
+                try:
+                    self.companyPageUrl = companyPageUrlRegex3.findall(raw_text)[0]
+                except:
+                    self.companyPageUrl =""
 
         #return self
 
@@ -210,23 +219,35 @@ def loadStockSymbolsList(path=outputFolder+stockSymbolsFile):
     return stockSymbolsList
 
 def makeStocksList(inPath=outputFolder+stockSymbolsFile,
-                   outputFolder=stocksFolder):
+                   outputFolder=stocksFolder,
+                   remake=False,
+                   ):
     symbols = loadStockSymbolsList()
+    if not os.path.exists(outputFolder):
+        os.makedirs(outputFolder)
     for N in symbols:
         try:
             st = stock(N)
-            pickle.dump(st, open(outputFolder+st.name+'.pydump','w'))
-            print st.name, "-->", outputFolder+st.name+'.pydump'
-
+            if os.path.exists(outputFolder+st.name+'.pydump') and (not remake):
+                continue
+            else:
+                pickle.dump(st, open(outputFolder+st.name+'.pydump','w'))
+                print st.name, "-->", outputFolder+st.name+'.pydump'
         except:
             print "stock symbol", N, "not found!!!!"
+        if st.name[0]<='9':  #hack
+            os.remove(outputFolder+st.name+'.pydump')
 
-def loadStocksList(inputFolder=stocksFolder):
+def loadStocksList(inputFolder=stocksFolder, verbose=False):
+    print "loading stocks"
     stocksList = []
     L = os.listdir(inputFolder)
     L.sort(key=lambda v: v[-13:-7])
     for fileName in L:
         stocksList.append(pickle.load(open(inputFolder+fileName,'r')))
+        if verbose:
+            print stocksList[-1].name, ' | ',
+            
     return stocksList
 
 def writeCurrentStockPrices(verbose=True):
@@ -293,6 +314,8 @@ def find(key1=""):
 
 def check(symbol):
     return stock(symbol)().load()().plot()
+
+        
 ###
 
 
