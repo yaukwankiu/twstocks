@@ -29,12 +29,15 @@ companyNameRegex = re.compile( ur'\<TITLE.+TITLE\>', re.UNICODE)
 companyPageUrlRegex = re.compile(ur"(?<=\' target\=\'_NONE\'\>)http\:\/\/.+?\/"   )#hack
 newsItemRegex       = re.compile(ur'(?<=\<td height\=\"37\" valign=\"bottom\">).+(?=\<\/td\>)', re.UNICODE) # we want to url too
 stockSymbolsList = []
-outputFolder = "c:/chen chen/stocks/"
+outputFolder = "D:/twstocks/"
+#outputFolder = "c:/chen chen/stocks/"
 stockSymbolsFile='stockSymbols.pydump'
 pricesFolder = outputFolder+ "prices/"
 stocksFolder = outputFolder +"stocks/"
-foldersList = [stocksFolder, pricesFolder]
+newsFolder   = outputFolder +"news/"
+foldersList = [stocksFolder, pricesFolder, newsFolder]
 numberOfPricesToShow = 10
+numberOfNewsItemsToShow= 4
 stocksList=[]
 ############################
 #
@@ -50,7 +53,7 @@ class stock:
         self.symbol = symbol
         self.yahooFrontPageUrl     = 'https://tw.stock.yahoo.com/d/s/company_' + symbol + '.html'
         self.yahooCurrentPageUrl   = 'https://tw.stock.yahoo.com/q/q?s=' + symbol
-
+        self.yahooNewsPageUrl      = 'https://tw.stock.yahoo.com/q/h?s=' + symbol
         #   get some basic information from the front page
         self.name      = str(symbol)    #default
         try:
@@ -70,11 +73,14 @@ class stock:
 
         #return self
 
-    def __call__(self, numberOfPricesToShow=numberOfPricesToShow):
+    def __call__(self, numberOfPricesToShow=numberOfPricesToShow, numberOfNewsItemsToShow=numberOfNewsItemsToShow):
         outputString = ""
         #outputString += self.symbol  + '\n'  #unnecessary
         outputString += self.name + '\n'
         outputString += self.yahooCurrentPageUrl + '\n'
+        if self.newsItems ==[]:
+            self.loadNews()
+        outputString += self.showNews(N=3)
         outputString += '\n'.join([time.asctime(time.localtime((v['pingTime'])))+ ":  $" + str(v['price']) for v in self.pricesList][-numberOfPricesToShow:])
         print outputString
         return self        
@@ -92,6 +98,7 @@ class stock:
         self.currentPricePingTime = t0
         self.currentPricePingReturnTime = t1
         self.currentPrice = currentPrice
+        self.fetchNews(raw_text=raw_text)
         if verbose:
             print "Time: ", time.asctime(time.localtime(t0)),
             if showResponseTime:
@@ -123,6 +130,56 @@ class stock:
         if verbose:
             print self.name, outputString
 
+    def fetchNews(self, raw_text="", newsPageUrl="", verbose=True, veryVerbose=False):
+
+        if not hasattr(self, 'yahooNewsPageUrl'):
+            self.newsPageUrl = 'https://tw.stock.yahoo.com/q/h?s=' + symbol #hack
+        if raw_text=="":
+            if newsPageUrl =="":
+                newsPageUrl = self.yahooNewsPageUrl
+            newsPage = urllib2.urlopen(newsPageUrl)
+            raw_text = newsPage.read()
+            newsPage.close() 
+        if veryVerbose:
+            print raw_text
+        newsItems = newsItemRegex.findall(raw_text)
+        newsItems = [(int(time.time()), v) for v in newsItems]
+        for newsItem in newsItems:
+            if newsItem[1] not in [v[1] for v in self.newsItems]:
+                self.newsItems.append(newsItem)
+        if verbose:
+            print '\n'.join([v[1] for v in newsItems])
+        if veryVerbose:
+            return raw_text
+
+    def writeNews(self):
+        newsItems2 = [str(v[0])+'\t'+v[1] for v in self.newsItems]
+        outputString = "\n".join(newsItems2) + "\n"
+        open(newsFolder+self.name+'.dat','a').write(outputString)
+
+    def showNews(self, N=10, showTime=False, display=False):
+        #cleanupRegex = re.compile(r'\< a href[.\/\"]+\"\>', re.S)#hack
+        cleanupRegex = re.compile(r'\<a href\=\".+\"\>', re.S)#hack
+        if showTime:
+            #newsItems2 = [time.asctime(time.localtime(v[0]))+'\t'+ re.sub(r'\< a href.+\"\>', '', v[1]) for v in self.newsItems[-N:]]
+            newsItems2 = [time.asctime(time.localtime(v[0]))+'  '+ cleanupRegex.sub('', v[1][:-4]) for v in self.newsItems[-N:]]
+        else:
+            newsItems2 = [cleanupRegex.sub('', v[1][:-4]) for v in self.newsItems[-N:]]
+        outputString = "\n".join(newsItems2) + "\n"
+        if display:
+            print outputString
+        return outputString
+
+    def loadNews(self, eraseOld=False):
+        if eraseOld:
+            self.newsItems = []
+        x = open(newsFolder+self.name+'.dat','r').read()
+        y = x.split('\n')
+        y = [v for v in y if "</a>" in v] # a simple check
+        y = [v.split('\t') for v in y]
+        y = [(int(v[0]), v[1]) for v in y]
+        self.newsItems.extend(y)
+        
     def getPriceList(self, throttle=0.3, repetitions=-999, verbose=True):
         count = 0
         while count!= repetitions:
@@ -135,20 +192,7 @@ class stock:
             if throttle>0:
                 time.sleep(throttle)
     
-    def fetchNews(self, newsPageURL="", verbose=True):
-        if newsPageURL =="":
-            newsPageURl = self.yahooCurrentPageUrl
-        self.openYahooCurrentPage()
-        raw_text = self.yahooCurrentPage.read()
-        self.yahooCurrentPage.close() 
-        newsItems = newsItemsRegex.findall(rawText)
-        newsItems = [(int(time.time()), v) for v in newsItems]
-        for newsItem in newsItems:
-            if newsItem[1] not in [v[1] for v in newsItems]:
-                self.newsItems.join(newsItem)
-        if verbose:
-            print '\n'.join([v[1] for v in newsItems])
-                
+               
     def loadPrices(self, pricesPath="", eraseOld=True, verbose=False):
         if eraseOld:
             self.pricesList = []
@@ -489,4 +533,3 @@ if __name__=="__main__":
 #if __name__ != "__main__":
 #    stocksList = loadStocksList()
 #   examples   = examples()
-
