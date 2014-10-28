@@ -27,6 +27,7 @@ currentPriceRegex = re.compile(r'(?<=\<td\ align\=\"center\"\ bgcolor\=\"\#FFFff
 #companyNameRegex = re.compile( ur'(?<=\<TITLE\>).+(?=-公司資料-奇摩股市\<\/TITLE\>)',re.UNICODE)   #doesn't work somehow
 companyNameRegex = re.compile( ur'\<TITLE.+TITLE\>', re.UNICODE)
 companyPageUrlRegex = re.compile(ur"(?<=\' target\=\'_NONE\'\>)http\:\/\/.+?\/"   )#hack
+newsItemRegex       = re.compile(ur'(?<=\<td height\=\"37\" valign=\"bottom\">).+(?=\<\/td\>)', re.UNICODE) # we want to url too
 stockSymbolsList = []
 outputFolder = "c:/chen chen/stocks/"
 stockSymbolsFile='stockSymbols.pydump'
@@ -60,6 +61,7 @@ class stock:
         except:
             print "Can't open yahooFrontPage for symbol ", symbol
         self.pricesList          = []
+        self.newsItems           = []
         try:
             self.companyPageUrl = companyPageUrlRegex.findall(raw_text)[0]
         except:
@@ -132,7 +134,21 @@ class stock:
                                    })
             if throttle>0:
                 time.sleep(throttle)
-
+    
+    def fetchNews(self, newsPageURL="", verbose=True):
+        if newsPageURL =="":
+            newsPageURl = self.yahooCurrentPageUrl
+        self.openYahooCurrentPage()
+        raw_text = self.yahooCurrentPage.read()
+        self.yahooCurrentPage.close() 
+        newsItems = newsItemsRegex.findall(rawText)
+        newsItems = [(int(time.time()), v) for v in newsItems]
+        for newsItem in newsItems:
+            if newsItem[1] not in [v[1] for v in newsItems]:
+                self.newsItems.join(newsItem)
+        if verbose:
+            print '\n'.join([v[1] for v in newsItems])
+                
     def loadPrices(self, pricesPath="", eraseOld=True, verbose=False):
         if eraseOld:
             self.pricesList = []
