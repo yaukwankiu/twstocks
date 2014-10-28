@@ -6,6 +6,8 @@ from mark2 import *
 main()
 
 """
+#import time# hack
+#print 'sleeping 3600 secs'; time.sleep(3600) # hack
 ############################
 #   imports
 #from matplotlib import ion
@@ -35,7 +37,7 @@ stockSymbolsList = []
 outputFolder = "c:/chen chen/stocks/"
 stockSymbolsFile='stockSymbols.pydump'
 pricesFolder = outputFolder+ "prices/"
-stocksFolder = outputFolder +"stocks_7/"
+stocksFolder = outputFolder +"stocks_8/"        #edit here
 foldersList = [stocksFolder, pricesFolder]
 numberOfPricesToShow = 10
 stocksList=[]
@@ -337,9 +339,10 @@ def main1():
             time.sleep(.5)
 
 def main2(#toWatch="fixed",
-          toWatch="random",
-          #toWatch="both",
-          timeSleep=5,
+          #toWatch="random",
+          #toWatch='none',
+          toWatch="both",
+          timeSleep=7.5,
           verbose=False):
     print "=================="
     print time.asctime(time.localtime(time.time()))
@@ -365,7 +368,9 @@ def main2(#toWatch="fixed",
         
         #stocks = loadStocksList()   #clean up every day
         while not isTradingHour():
-            if toWatch =='random':
+            if toWatch =='none':
+                pass  
+            elif toWatch =='random':
                 watchRandom(stocks=stocks)
             elif toWatch =='fixed':
                 watch()
@@ -390,6 +395,11 @@ def main2(#toWatch="fixed",
                         stockRandom.load()
                         stockRandom.getCurrentPrice()
                         #stockRandom.writeCurrentPrice()
+                        print "###############################"
+                        print "#"
+                        stockRandom()
+                        print "#"
+                        print "###############################"
                         stockRandom.plot()
                     except:
                         print "Can't get data for: ",stockRandom.name
