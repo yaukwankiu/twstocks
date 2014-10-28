@@ -1,8 +1,11 @@
+<<<<<<< HEAD
 *.xls
+=======
+>>>>>>> 072a93be2364d73488df4c4dc6f855d5e9e2aea8
 *.pyc
 *.*~
 *.dat
 *.txt
 *.pydump
 *.html
-
+localSettings.py

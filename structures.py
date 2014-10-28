@@ -22,7 +22,7 @@ currentPriceRegex = re.compile(r'(?<=\<td\ align\=\"center\"\ bgcolor\=\"\#FFFff
 #companyNameRegex = re.compile( ur'(?<=\<TITLE\>).+(?=-公司資料-奇摩股市\<\/TITLE\>)',re.UNICODE)   #doesn't work somehow
 companyNameRegex = re.compile( ur'\<TITLE.+TITLE\>', re.UNICODE)
 stockSymbolsList = []
-outputFolder = "c:/chen chen/stocks/"
+outputFolder = ""
 stockSymbolsFile='stockSymbols.pydump'
 pricesFolder = outputFolder+ "prices/"
 stocksFolder = outputFolder +"stocks/"
@@ -189,7 +189,7 @@ def makeStocksList(inPath=outputFolder+stockSymbolsFile,
     for N in symbols:
         try:
             st = stock(N)
-            pickle.dump(st, open(outputFolder+st.name+'.pydump','w'))
+            pickle.dump(st, open(outputFolder+st.name+ '.pydump','w'))
             print st.name, "-->", outputFolder+st.name+'.pydump'
 
         except:

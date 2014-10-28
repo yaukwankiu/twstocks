@@ -6,8 +6,6 @@ from mark2 import *
 main()
 
 """
-#import time# hack
-#print 'sleeping 3600 secs'; time.sleep(3600) # hack
 ############################
 #   imports
 #from matplotlib import ion
@@ -29,15 +27,17 @@ currentPriceRegex = re.compile(r'(?<=\<td\ align\=\"center\"\ bgcolor\=\"\#FFFff
 #companyNameRegex = re.compile( ur'(?<=\<TITLE\>).+(?=-公司資料-奇摩股市\<\/TITLE\>)',re.UNICODE)   #doesn't work somehow
 companyNameRegex = re.compile( ur'\<TITLE.+TITLE\>', re.UNICODE)
 companyPageUrlRegex = re.compile(ur"(?<=\' target\=\'_NONE\'\>)http\:\/\/.+?\/"   )#hack
-companyPageUrlRegex2 = re.compile(ur"(?<=\' target\=\'_NONE\'\>)http\:\/\/.+?\.com\.tw"   )#hack2
-companyPageUrlRegex3 = re.compile(ur"(?<=\' target\=\'_NONE\'\>)http\:\/\/.+?\.com"   )#hack3
+newsItemRegex       = re.compile(ur'(?<=\<td height\=\"37\" valign=\"bottom\">).+(?=\<\/td\>)', re.UNICODE) # we want to url too
 stockSymbolsList = []
+#outputFolder = "D:/twstocks/"
 outputFolder = "c:/chen chen/stocks/"
 stockSymbolsFile='stockSymbols.pydump'
 pricesFolder = outputFolder+ "prices/"
-stocksFolder = outputFolder +"stocks_8/"        #edit here
-foldersList = [stocksFolder, pricesFolder]
+stocksFolder = outputFolder +"stocks/"
+newsFolder   = outputFolder +"news/"
+foldersList = [stocksFolder, pricesFolder, newsFolder]
 numberOfPricesToShow = 10
+numberOfNewsItemsToShow= 4
 stocksList=[]
 ############################
 #
@@ -53,7 +53,7 @@ class stock:
         self.symbol = symbol
         self.yahooFrontPageUrl     = 'https://tw.stock.yahoo.com/d/s/company_' + symbol + '.html'
         self.yahooCurrentPageUrl   = 'https://tw.stock.yahoo.com/q/q?s=' + symbol
-
+        self.yahooNewsPageUrl      = 'https://tw.stock.yahoo.com/q/h?s=' + symbol
         #   get some basic information from the front page
         self.name      = str(symbol)    #default
         try:
@@ -64,24 +64,23 @@ class stock:
         except:
             print "Can't open yahooFrontPage for symbol ", symbol
         self.pricesList          = []
+        self.newsItems           = []
         try:
             self.companyPageUrl = companyPageUrlRegex.findall(raw_text)[0]
         except:
-            try:
-                self.companyPageUrl = companyPageUrlRegex2.findall(raw_text)[0]
-            except:
-                try:
-                    self.companyPageUrl = companyPageUrlRegex3.findall(raw_text)[0]
-                except:
-                    self.companyPageUrl =""
+            self.companyPageUrl = ""
+
 
         #return self
 
-    def __call__(self, numberOfPricesToShow=numberOfPricesToShow):
+    def __call__(self, numberOfPricesToShow=numberOfPricesToShow, numberOfNewsItemsToShow=numberOfNewsItemsToShow):
         outputString = ""
         #outputString += self.symbol  + '\n'  #unnecessary
         outputString += self.name + '\n'
         outputString += self.yahooCurrentPageUrl + '\n'
+        if self.newsItems ==[]:
+            self.loadNews()
+        outputString += self.showNews(N=3)
         outputString += '\n'.join([time.asctime(time.localtime((v['pingTime'])))+ ":  $" + str(v['price']) for v in self.pricesList][-numberOfPricesToShow:])
         print outputString
         return self        
@@ -99,6 +98,7 @@ class stock:
         self.currentPricePingTime = t0
         self.currentPricePingReturnTime = t1
         self.currentPrice = currentPrice
+        self.fetchNews(raw_text=raw_text)
         if verbose:
             print "Time: ", time.asctime(time.localtime(t0)),
             if showResponseTime:
@@ -130,6 +130,56 @@ class stock:
         if verbose:
             print self.name, outputString
 
+    def fetchNews(self, raw_text="", newsPageUrl="", verbose=True, veryVerbose=False):
+
+        if not hasattr(self, 'yahooNewsPageUrl'):
+            self.newsPageUrl = 'https://tw.stock.yahoo.com/q/h?s=' + symbol #hack
+        if raw_text=="":
+            if newsPageUrl =="":
+                newsPageUrl = self.yahooNewsPageUrl
+            newsPage = urllib2.urlopen(newsPageUrl)
+            raw_text = newsPage.read()
+            newsPage.close() 
+        if veryVerbose:
+            print raw_text
+        newsItems = newsItemRegex.findall(raw_text)
+        newsItems = [(int(time.time()), v) for v in newsItems]
+        for newsItem in newsItems:
+            if newsItem[1] not in [v[1] for v in self.newsItems]:
+                self.newsItems.append(newsItem)
+        if verbose:
+            print '\n'.join([v[1] for v in newsItems])
+        if veryVerbose:
+            return raw_text
+
+    def writeNews(self):
+        newsItems2 = [str(v[0])+'\t'+v[1] for v in self.newsItems]
+        outputString = "\n".join(newsItems2) + "\n"
+        open(newsFolder+self.name+'.dat','a').write(outputString)
+
+    def showNews(self, N=10, showTime=False, display=False):
+        #cleanupRegex = re.compile(r'\< a href[.\/\"]+\"\>', re.S)#hack
+        cleanupRegex = re.compile(r'\<a href\=\".+\"\>', re.S)#hack
+        if showTime:
+            #newsItems2 = [time.asctime(time.localtime(v[0]))+'\t'+ re.sub(r'\< a href.+\"\>', '', v[1]) for v in self.newsItems[-N:]]
+            newsItems2 = [time.asctime(time.localtime(v[0]))+'  '+ cleanupRegex.sub('', v[1][:-4]) for v in self.newsItems[-N:]]
+        else:
+            newsItems2 = [cleanupRegex.sub('', v[1][:-4]) for v in self.newsItems[-N:]]
+        outputString = "\n".join(newsItems2) + "\n"
+        if display:
+            print outputString
+        return outputString
+
+    def loadNews(self, eraseOld=False):
+        if eraseOld:
+            self.newsItems = []
+        x = open(newsFolder+self.name+'.dat','r').read()
+        y = x.split('\n')
+        y = [v for v in y if "</a>" in v] # a simple check
+        y = [v.split('\t') for v in y]
+        y = [(int(v[0]), v[1]) for v in y]
+        self.newsItems.extend(y)
+        
     def getPriceList(self, throttle=0.3, repetitions=-999, verbose=True):
         count = 0
         while count!= repetitions:
@@ -141,7 +191,8 @@ class stock:
                                    })
             if throttle>0:
                 time.sleep(throttle)
-
+    
+               
     def loadPrices(self, pricesPath="", eraseOld=True, verbose=False):
         if eraseOld:
             self.pricesList = []
@@ -221,34 +272,23 @@ def loadStockSymbolsList(path=outputFolder+stockSymbolsFile):
     return stockSymbolsList
 
 def makeStocksList(inPath=outputFolder+stockSymbolsFile,
-                   outputFolder=stocksFolder,
-                   remake=False,
-                   ):
+                   outputFolder=stocksFolder):
     symbols = loadStockSymbolsList()
-    if not os.path.exists(outputFolder):
-        os.makedirs(outputFolder)
     for N in symbols:
         try:
             st = stock(N)
-            if os.path.exists(outputFolder+st.name+'.pydump') and (not remake):
-                continue
-            else:
-                pickle.dump(st, open(outputFolder+st.name+'.pydump','w'))
-                print st.name, "-->", outputFolder+st.name+'.pydump'
+            pickle.dump(st, open(outputFolder+st.name+'.pydump','w'))
+            print st.name, "-->", outputFolder+st.name+'.pydump'
+
         except:
             print "stock symbol", N, "not found!!!!"
-        if st.name[0]<='9':  #hack
-            os.remove(outputFolder+st.name+'.pydump')
 
-def loadStocksList(inputFolder=stocksFolder, verbose=False):
-    print "loading stocks"
+def loadStocksList(inputFolder=stocksFolder):
     stocksList = []
     L = os.listdir(inputFolder)
     L.sort(key=lambda v: v[-13:-7])
     for fileName in L:
         stocksList.append(pickle.load(open(inputFolder+fileName,'r')))
-        if verbose:
-            print stocksList[-1].name, ' | ',
     return stocksList
 
 def writeCurrentStockPrices(verbose=True):
@@ -315,7 +355,6 @@ def find(key1=""):
 
 def check(symbol):
     return stock(symbol)().load()().plot()
-
 ###
 
 
@@ -337,9 +376,8 @@ def main1():
             time.sleep(.5)
 
 def main2(#toWatch="fixed",
-          #toWatch="random",
-          #toWatch='none',
-          toWatch="both",
+          toWatch="random",
+          #toWatch="both",
           timeSleep=5,
           verbose=False):
     print "=================="
@@ -366,9 +404,7 @@ def main2(#toWatch="fixed",
         
         #stocks = loadStocksList()   #clean up every day
         while not isTradingHour():
-            if toWatch =='none':
-                pass  
-            elif toWatch =='random':
+            if toWatch =='random':
                 watchRandom(stocks=stocks)
             elif toWatch =='fixed':
                 watch()
@@ -393,11 +429,6 @@ def main2(#toWatch="fixed",
                         stockRandom.load()
                         stockRandom.getCurrentPrice()
                         #stockRandom.writeCurrentPrice()
-                        print "###############################"
-                        print "#"
-                        stockRandom()
-                        print "#"
-                        print "###############################"
                         stockRandom.plot()
                     except:
                         print "Can't get data for: ",stockRandom.name
@@ -502,6 +533,3 @@ if __name__=="__main__":
 #if __name__ != "__main__":
 #    stocksList = loadStocksList()
 #   examples   = examples()
-
-
-

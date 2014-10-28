@@ -61,6 +61,7 @@ class stock:
         except:
             print "Can't open yahooFrontPage for symbol ", symbol
         self.pricesList          = []
+        #return self
 
     def __call__(self, numberOfPricesToShow=numberOfPricesToShow):
         outputString = ""
@@ -241,8 +242,10 @@ def writeCurrentStockPrices(verbose=True):
 
 def isTradingHour():
     """determine if it is trading Hour"""
-    return ((time.localtime(time.time()).tm_hour >8 and time.localtime(time.time()).tm_hour <13) or\
-              (time.localtime(time.time()).tm_hour==13 and time.localtime(time.time()).tm_min<=40) or\
+    #return ((time.localtime(time.time()).tm_hour >8 and time.localtime(time.time()).tm_hour <13) or\
+    #          (time.localtime(time.time()).tm_hour==13 and time.localtime(time.time()).tm_min<=40) or\
+    return ((time.localtime(time.time()).tm_hour >8 and time.localtime(time.time()).tm_hour <14) or\
+              (time.localtime(time.time()).tm_hour==14 and time.localtime(time.time()).tm_min<=30) or\
               (time.localtime(time.time()).tm_hour==8 and time.localtime(time.time()).tm_min>=30))\
               and\
             ( time.localtime(time.time()).tm_wday <=4) 
