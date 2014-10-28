@@ -166,8 +166,10 @@ class stock:
         y = [v['price'] for v in self.pricesList]
         x = [v['pingTime'] for v in self.pricesList]
         plt.plot(x,y)
-        plt.title(self.symbol+":" + time.asctime(time.localtime()) +'\n' +\
-                   self.companyPageUrl)
+        #plt.title(self.symbol+":" + time.asctime(time.localtime()) +'\n' +\
+        #           self.companyPageUrl)
+        plt.title(self.symbol+": " + self.companyPageUrl + '\n'+ time.asctime(time.localtime(self.pricesList[0]['pingTime'])) + "~"  +\
+                 time.asctime(time.localtime()))
         if display:            
             plt.show(block=block)
         return self
