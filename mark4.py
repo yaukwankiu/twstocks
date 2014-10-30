@@ -241,7 +241,10 @@ class stock:
         plt.title(self.symbol+": " + self.companyPageUrl + '\n'+ time.asctime(time.localtime(pingTime)) + "~"  +\
                  time.asctime(time.localtime()))
         if imagePath!="":
-            plt.savefig(imagePath)
+            if imagePath == "default":
+                plt.savefig(chartsFolder+self.name+'.png')        
+            else:
+                plt.savefig(imagePath)
         if display:            
             plt.show(block=block)
         return self
