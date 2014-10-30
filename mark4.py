@@ -497,7 +497,7 @@ def getWatchList():
     ##############################
     return stocksList
 
-def watch(L="", load=True, display=True, timeSleep=5):
+def watch(L="", load=True, display=True, imagepath="", timeSleep=5):
     if L =="":
         L = getWatchList()
     for st in L:
@@ -505,10 +505,10 @@ def watch(L="", load=True, display=True, timeSleep=5):
             st.load()
         st(30)
         if display:
-            st.plot()
+            st.plot(imagepath=imagepath)
             time.sleep(timeSleep)
 
-def watchRandom(stocks="", timeSleep=10):
+def watchRandom(stocks="", imagepath="", timeSleep=10):
     if stocks=="":
         stocks = loadStocksList()
     print '...............'
@@ -517,7 +517,7 @@ def watchRandom(stocks="", timeSleep=10):
     st = stocks[N]
     st.load(verbose=False)
     st(5)
-    st.plot()
+    st.plot(imagepath=imagepath)
     seconds = time.localtime().tm_sec
     #time.sleep(60-seconds-0.05)
     time.sleep(timeSleep)
