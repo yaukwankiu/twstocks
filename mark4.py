@@ -29,11 +29,12 @@ companyNameRegex = re.compile( ur'\<TITLE.+TITLE\>', re.UNICODE)
 companyPageUrlRegex = re.compile(ur"(?<=\' target\=\'_NONE\'\>)http\:\/\/.+?\/"   )#hack
 newsItemRegex       = re.compile(ur'(?<=\<td height\=\"37\" valign=\"bottom\">).+(?=\<\/td\>)', re.UNICODE) # we want to url too
 stockSymbolsList = []
-outputFolder = "D:/twstocks/"
-#outputFolder = "c:/chen chen/stocks/"
+#outputFolder = "D:/twstocks/"
+outputFolder = "c:/chen chen/stocks/"
 stockSymbolsFile='stockSymbols.pydump'
 pricesFolder = outputFolder+ "prices/"
-stocksFolder = outputFolder +"stocks_mark4/"
+#stocksFolder = outputFolder +"stocks_mark4/"
+stocksFolder = outputFolder +"stocks_9/"
 newsFolder   = outputFolder +"news/"
 chartsFolder = outputFolder + "charts/"
 foldersList = [stocksFolder, pricesFolder, newsFolder, chartsFolder]
