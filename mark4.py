@@ -227,7 +227,7 @@ class stock:
         return self.loadPrices(*args, **kwargs)
 
     
-    def plot(self, display=True, block=False):
+    def plot(self, display=True, imagePath="", block=False):
         plt.close()
         y = [v['price'] for v in self.pricesList]
         x = [v['pingTime'] for v in self.pricesList]
@@ -236,6 +236,8 @@ class stock:
         #           self.companyPageUrl)
         plt.title(self.symbol+": " + self.companyPageUrl + '\n'+ time.asctime(time.localtime(self.pricesList[0]['pingTime'])) + "~"  +\
                  time.asctime(time.localtime()))
+        if imagepath!="":
+            plt.savefig(imagePath)
         if display:            
             plt.show(block=block)
         return self
