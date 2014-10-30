@@ -29,13 +29,14 @@ companyNameRegex = re.compile( ur'\<TITLE.+TITLE\>', re.UNICODE)
 companyPageUrlRegex = re.compile(ur"(?<=\' target\=\'_NONE\'\>)http\:\/\/.+?\/"   )#hack
 newsItemRegex       = re.compile(ur'(?<=\<td height\=\"37\" valign=\"bottom\">).+(?=\<\/td\>)', re.UNICODE) # we want to url too
 stockSymbolsList = []
-#outputFolder = "D:/twstocks/"
-outputFolder = "c:/chen chen/stocks/"
+outputFolder = "D:/twstocks/"
+#outputFolder = "c:/chen chen/stocks/"
 stockSymbolsFile='stockSymbols.pydump'
 pricesFolder = outputFolder+ "prices/"
-stocksFolder = outputFolder +"stocks/"
+stocksFolder = outputFolder +"stocks_mark4/"
 newsFolder   = outputFolder +"news/"
-foldersList = [stocksFolder, pricesFolder, newsFolder]
+chartsFolder = outputFolder + "charts/"
+foldersList = [stocksFolder, pricesFolder, newsFolder, chartsFolder]
 numberOfPricesToShow = 10
 numberOfNewsItemsToShow= 4
 stocksList=[]
@@ -79,13 +80,11 @@ class stock:
         outputString += self.name + '\n'
         outputString += self.yahooCurrentPageUrl + '\n'
         if self.newsItems ==[]:
-            #self.loadNews()
             try:
                 self.loadNews()
             except IOError:
                 self.fetchNews()
                 self.writeNews()
-
         outputString += self.showNews(N=3)
         outputString += '\n'.join([time.asctime(time.localtime((v['pingTime'])))+ ":  $" + str(v['price']) for v in self.pricesList][-numberOfPricesToShow:])
         print outputString
@@ -234,9 +233,13 @@ class stock:
         plt.plot(x,y)
         #plt.title(self.symbol+":" + time.asctime(time.localtime()) +'\n' +\
         #           self.companyPageUrl)
-        plt.title(self.symbol+": " + self.companyPageUrl + '\n'+ time.asctime(time.localtime(self.pricesList[0]['pingTime'])) + "~"  +\
+        try:
+            pingTime = self.pricesList[0]['pingTime']
+        except IndexError:
+            pingTime = ""   # to fail gracefully
+        plt.title(self.symbol+": " + self.companyPageUrl + '\n'+ time.asctime(time.localtime(pingTime)) + "~"  +\
                  time.asctime(time.localtime()))
-        if imagepath!="":
+        if imagePath!="":
             plt.savefig(imagePath)
         if display:            
             plt.show(block=block)
@@ -413,15 +416,16 @@ def main2(#toWatch="fixed",
         #stocks = loadStocksList()   #clean up every day
         while not isTradingHour():
             if toWatch =='random':
-                watchRandom(stocks=stocks)
+                watchRandom(stocks=stocks, imagePath=chartsFolder+str(int(time.time()))+'.png')
+                watchRandom(stocks=stocks, timeSleep=timeSleep, imagePath=chartsFolder+'temp.png')
             elif toWatch =='fixed':
                 watch()
             else:
-                watchRandom(stocks=stocks, timeSleep=timeSleep)
-                watchRandom(stocks=stocks, timeSleep=timeSleep)
-                watchRandom(stocks=stocks, timeSleep=timeSleep)
+                watchRandom(stocks=stocks, timeSleep=timeSleep, imagePath=chartsFolder+str(int(time.time()))+'.png')
+                watchRandom(stocks=stocks, timeSleep=timeSleep, imagePath=chartsFolder+'temp.png')
                 watch(timeSleep=timeSleep)
-                watchRandom(stocks=stocks, timeSleep=timeSleep)
+                watchRandom(stocks=stocks, timeSleep=timeSleep, imagePath=chartsFolder+str(int(time.time()))+'.png')
+                watchRandom(stocks=stocks, timeSleep=timeSleep, imagePath=chartsFolder+'temp.png')
 
         while isTradingHour():
              
@@ -497,7 +501,7 @@ def getWatchList():
     ##############################
     return stocksList
 
-def watch(L="", load=True, display=True, imagepath="", timeSleep=5):
+def watch(L="", load=True, display=True, timeSleep=5):
     if L =="":
         L = getWatchList()
     for st in L:
@@ -505,24 +509,26 @@ def watch(L="", load=True, display=True, imagepath="", timeSleep=5):
             st.load()
         st(30)
         if display:
-            st.plot(imagepath=imagepath)
+            st.plot()
             time.sleep(timeSleep)
 
-def watchRandom(stocks="", imagepath="", timeSleep=10):
+def watchRandom(stocks="", imagePath="", timeSleep=10):
     if stocks=="":
         stocks = loadStocksList()
-    print '...............'
+    print '------------------------------------------------------------'
     print time.asctime(time.localtime(time.time()))
     N = int(len(stocks)* np.random.random())
     st = stocks[N]
     st.load(verbose=False)
     st(5)
-    st.plot(imagepath=imagepath)
+    st.plot(imagePath=imagePath)
     seconds = time.localtime().tm_sec
     #time.sleep(60-seconds-0.05)
     time.sleep(timeSleep)
 
+
 #   make stock list if not found in the first import
+
 if not os.path.exists(stocksFolder):
     print "-----------------------------"
     print "first import:  stocksFolder not found!"
@@ -530,6 +536,10 @@ if not os.path.exists(stocksFolder):
     time.sleep(1)
     os.makedirs(stocksFolder)
     makeStocksList()
+
+for folder in foldersList:
+    if not os.path.exists(folder):
+        os.makedirs(folder)
 
 if __name__=="__main__":
     print "sleeping 5 seconds"
