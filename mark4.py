@@ -520,6 +520,15 @@ def watchRandom(stocks="", timeSleep=10):
     #time.sleep(60-seconds-0.05)
     time.sleep(timeSleep)
 
+#   make stock list if not found in the first import
+if not os.path.exists(stocksFolder):
+    print "-----------------------------"
+    print "first import:  stocksFolder not found!"
+    print "makeStocksList function called"
+    time.sleep(1)
+    os.makedirs(stocksFolder)
+    makeStocksList()
+
 if __name__=="__main__":
     print "sleeping 5 seconds"
     time.sleep(5)
