@@ -237,7 +237,7 @@ class stock:
         try:
             pingTime = self.pricesList[0]['pingTime']
         except IndexError:
-            pingTime = ""   # to fail gracefully
+            pingTime = 0   # to fail gracefully ; hack
         plt.title(self.symbol+": " + self.companyPageUrl + '\n'+ time.asctime(time.localtime(pingTime)) + "~"  +\
                  time.asctime(time.localtime()))
         if imagePath!="":
