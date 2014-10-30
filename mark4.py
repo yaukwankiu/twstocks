@@ -79,7 +79,13 @@ class stock:
         outputString += self.name + '\n'
         outputString += self.yahooCurrentPageUrl + '\n'
         if self.newsItems ==[]:
-            self.loadNews()
+            #self.loadNews()
+            try:
+                self.loadNews()
+            except IOError:
+                self.fetchNews()
+                self.writeNews()
+
         outputString += self.showNews(N=3)
         outputString += '\n'.join([time.asctime(time.localtime((v['pingTime'])))+ ":  $" + str(v['price']) for v in self.pricesList][-numberOfPricesToShow:])
         print outputString
