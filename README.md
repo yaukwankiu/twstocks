@@ -1,4 +1,4 @@
 twstocks
 ========
 
-something obscure than nobody should care about
+something obscure that nobody should care about
